@@ -1,23 +1,11 @@
 pipeline {
     agent any
 
-    tools {
-        // Optional: Only if you added Python as a Jenkins tool
-        // python 'Python3.12'
-        sonarQubeScanner 'sonar-scanner' // Must match name defined in Jenkins tools
-    }
-
     environment {
-        PATH = "${tool 'sonar-scanner'}/bin:${env.PATH}"
+        SONAR_SCANNER_HOME = '/opt/sonar-scanner'
     }
 
     stages {
-        stage('Checkout') {
-            steps {
-                checkout scm
-            }
-        }
-
         stage('Install Dependencies') {
             steps {
                 sh 'pip3 install -r requirements.txt'
@@ -27,8 +15,8 @@ pipeline {
         stage('Run Tests & Generate Coverage') {
             steps {
                 sh '''
-                    python3 -m coverage run -m pytest
-                    python3 -m coverage xml
+                    coverage run -m pytest
+                    coverage xml
                 '''
             }
         }
@@ -37,11 +25,11 @@ pipeline {
             steps {
                 withSonarQubeEnv('Jenkins-sonar-server') {
                     sh '''
-                        sonar-scanner \
-                          -Dsonar.projectKey=my-python-test \
-                          -Dsonar.sources=. \
-                          -Dsonar.sourceEncoding=UTF-8 \
-                          -Dsonar.python.coverage.reportPaths=coverage.xml
+                        ${SONAR_SCANNER_HOME}/bin/sonar-scanner \
+                        -Dsonar.projectKey=my-python-test \
+                        -Dsonar.sources=. \
+                        -Dsonar.sourceEncoding=UTF-8 \
+                        -Dsonar.python.coverage.reportPaths=coverage.xml
                     '''
                 }
             }
@@ -49,7 +37,7 @@ pipeline {
 
         stage('Quality Gate') {
             steps {
-                timeout(time: 5, unit: 'MINUTES') {
+                timeout(time: 1, unit: 'MINUTES') {
                     waitForQualityGate abortPipeline: true
                 }
             }
@@ -61,7 +49,7 @@ pipeline {
             echo '🔎 Pipeline completed. Check SonarQube dashboard.'
         }
         failure {
-            echo '❌ Pipeline failed. See logs.'
+            echo '❌ Pipeline failed. See logs..'
         }
     }
 }
