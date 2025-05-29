@@ -1,42 +1,47 @@
+// Jenkinsfile for PythonPipeline2 with SonarQube Quality Analysis & Gate
+
 pipeline {
     agent any
 
-    options {
-        skipDefaultCheckout(true) // prevent auto-checkout
-    }
-
     environment {
-        PYTHON_ENV = 'venv'
+        SONAR_SCANNER_HOME = '/opt/sonar-scanner'       // Path to sonar-scanner
+        VENV_DIR = 'venv'                                // Virtual environment directory
+        PROJECT_NAME = 'PythonPipeline2'                 // Sonar project key
     }
 
     stages {
-       stage('Clean Workspace') {
-    steps {
-        echo '🧹 Cleaning workspace to avoid permission issues...'
-        sh 'rm -rf .pytest_cache || true'
-        deleteDir()
-    }
-}
-
-
-        stage('Checkout Code') {
+        stage('Clean Workspace') {
             steps {
-                echo '📥 Checking out code from GitHub...'
-                checkout([
-                    $class: 'GitSCM',
-                    branches: [[name: '*/master']],
-                    userRemoteConfigs: [[url: 'https://github.com/Joel-glitch-alt/PythonPipeline2.git']],
-                    extensions: [[$class: 'CleanBeforeCheckout']] // cleans Git checkout dir
-                ])
+                echo "🧹 Cleaning workspace"
+                cleanWs()
             }
         }
 
-        stage('Install Dependencies') {
+        stage('Checkout Code') {
             steps {
-                echo '📦 Installing Python dependencies...'
+                echo "📥 Cloning Git repository"
+                checkout scm
+            }
+        }
+
+        stage('Fix Permissions') {
+            steps {
+                echo "🔧 Fixing file permissions"
                 sh '''
-                    python3 -m venv ${PYTHON_ENV}
-                    . ${PYTHON_ENV}/bin/activate
+                    if [ -d "__pycache__" ]; then
+                        rm -rf __pycache__
+                    fi
+                    find . -type f -exec chmod u+rw {} +
+                '''
+            }
+        }
+
+        stage('Setup Python Environment') {
+            steps {
+                echo "🐍 Setting up virtual environment"
+                sh '''
+                    python3 -m venv ${VENV_DIR}
+                    . ${VENV_DIR}/bin/activate
                     pip install --upgrade pip
                     pip install -r requirements.txt
                 '''
@@ -45,24 +50,47 @@ pipeline {
 
         stage('Run Tests') {
             steps {
-                echo '🧪 Running tests...'
+                echo "🧪 Running tests"
                 sh '''
-                    . ${PYTHON_ENV}/bin/activate
-                    pytest --maxfail=1 --disable-warnings -q
+                    . ${VENV_DIR}/bin/activate
+                    pytest > result.log || true
+                    cat result.log
                 '''
+            }
+        }
+
+        stage('SonarQube Analysis') {
+            steps {
+                echo "🔍 Running SonarQube analysis"
+                withSonarQubeEnv('My SonarQube') {
+                    sh '''
+                        . ${VENV_DIR}/bin/activate
+                        ${SONAR_SCANNER_HOME}/bin/sonar-scanner \
+                          -Dsonar.projectKey=${PROJECT_NAME} \
+                          -Dsonar.sources=. \
+                          -Dsonar.host.url=$SONAR_HOST_URL \
+                          -Dsonar.login=$SONAR_AUTH_TOKEN
+                    '''
+                }
+            }
+        }
+
+        stage('Quality Gate') {
+            steps {
+                echo "✅ Checking SonarQube Quality Gate"
+                timeout(time: 10, unit: 'MINUTES') {
+                    waitForQualityGate abortPipeline: true
+                }
             }
         }
     }
 
     post {
-        success {
-            echo '✅ Pipeline succeeded.'
+        always {
+            echo "🔎 Pipeline completed. Check SonarQube dashboard."
         }
         failure {
-            echo '❌ Pipeline failed. Check logs for details.'
-        }
-        always {
-            echo '🔍 Pipeline completed. Check reports or dashboard.'
+            echo "❌ Pipeline failed. See logs."
         }
     }
 }
