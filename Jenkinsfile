@@ -48,13 +48,13 @@ pipeline {
         stage('SonarQube Analysis') {
             steps {
                 withSonarQubeEnv('Jenkins-sonar-server') {
-                    sh '''
+                    sh """
                         ${SONAR_SCANNER_HOME}/bin/sonar-scanner \
                         -Dsonar.projectKey=my-python-test \
                         -Dsonar.sources=. \
                         -Dsonar.sourceEncoding=UTF-8 \
                         -Dsonar.python.coverage.reportPaths=coverage.xml
-                    '''
+                    """
                 }
             }
         }
