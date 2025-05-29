@@ -3,7 +3,7 @@ pipeline {
 
     tools {
         // If defined in Jenkins -> Global Tool Configuration
-        // python "Python3" or leave this block if system python is used
+         python "Python3"  //or leave this block if system python is used
     }
 
     environment {
