@@ -1,9 +1,9 @@
 pipeline {
-    agent any
-
-    tools {
-        // If defined in Jenkins -> Global Tool Configuration
-         python "Python3"  //or leave this block if system python is used
+    agent {
+        docker {
+            image 'python:3.10'
+            args '-u root'
+        }
     }
 
     environment {
@@ -35,7 +35,13 @@ pipeline {
         stage('SonarQube Analysis') {
             steps {
                 withSonarQubeEnv('Jenkins-sonar-server') {
-                    sh 'sonar-scanner'
+                    sh '''
+                        sonar-scanner \
+                          -Dsonar.projectKey=my-python-test \
+                          -Dsonar.sources=. \
+                          -Dsonar.sourceEncoding=UTF-8 \
+                          -Dsonar.python.coverage.reportPaths=coverage.xml
+                    '''
                 }
             }
         }
