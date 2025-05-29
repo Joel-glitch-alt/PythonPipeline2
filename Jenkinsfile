@@ -1,9 +1,10 @@
 pipeline {
-    agent {
-        docker {
-            image 'python:3.10'
-            args '-u root'
-        }
+    agent any
+
+    tools {
+        // Optional: Only if you added Python as a Jenkins tool
+        // python 'Python3.12'
+        sonarQubeScanner 'sonar-scanner' // Must match name defined in Jenkins tools
     }
 
     environment {
@@ -19,15 +20,15 @@ pipeline {
 
         stage('Install Dependencies') {
             steps {
-                sh 'pip install -r requirements.txt'
+                sh 'pip3 install -r requirements.txt'
             }
         }
 
         stage('Run Tests & Generate Coverage') {
             steps {
                 sh '''
-                    coverage run -m pytest
-                    coverage xml
+                    python3 -m coverage run -m pytest
+                    python3 -m coverage xml
                 '''
             }
         }
@@ -60,7 +61,7 @@ pipeline {
             echo '🔎 Pipeline completed. Check SonarQube dashboard.'
         }
         failure {
-            echo '❌ Pipeline failed. See logs..'
+            echo '❌ Pipeline failed. See logs.'
         }
     }
 }
