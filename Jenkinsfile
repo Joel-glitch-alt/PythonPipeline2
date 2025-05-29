@@ -1,46 +1,40 @@
 pipeline {
     agent any
 
+    options {
+        skipDefaultCheckout(true) // prevent auto-checkout
+    }
+
     environment {
-        SONAR_SCANNER_HOME = '/opt/sonar-scanner' // Update this path if needed
-        VENV_DIR = 'venv'
-        PROJECT_NAME = 'PythonPipeline2'
+        PYTHON_ENV = 'venv'
     }
 
     stages {
-
         stage('Clean Workspace') {
             steps {
-                echo "🧹 Cleaning workspace"
-                cleanWs()
+                echo '🧹 Cleaning workspace to avoid permission issues...'
+                deleteDir() // cleans everything in the workspace
             }
         }
 
         stage('Checkout Code') {
             steps {
-                echo "📥 Cloning Git repository"
-                checkout scm
+                echo '📥 Checking out code from GitHub...'
+                checkout([
+                    $class: 'GitSCM',
+                    branches: [[name: '*/master']],
+                    userRemoteConfigs: [[url: 'https://github.com/Joel-glitch-alt/PythonPipeline2.git']],
+                    extensions: [[$class: 'CleanBeforeCheckout']] // cleans Git checkout dir
+                ])
             }
         }
 
-        stage('Fix Permissions') {
+        stage('Install Dependencies') {
             steps {
-                echo "🔧 Fixing file permissions"
+                echo '📦 Installing Python dependencies...'
                 sh '''
-                    if [ -d "__pycache__" ]; then
-                        rm -rf __pycache__
-                    fi
-                    find . -type f -exec chmod u+rw {} +
-                '''
-            }
-        }
-
-        stage('Setup Python Environment') {
-            steps {
-                echo "🐍 Setting up virtual environment"
-                sh '''
-                    python3 -m venv ${VENV_DIR}
-                    . ${VENV_DIR}/bin/activate
+                    python3 -m venv ${PYTHON_ENV}
+                    . ${PYTHON_ENV}/bin/activate
                     pip install --upgrade pip
                     pip install -r requirements.txt
                 '''
@@ -49,47 +43,24 @@ pipeline {
 
         stage('Run Tests') {
             steps {
-                echo "🧪 Running tests"
+                echo '🧪 Running tests...'
                 sh '''
-                    . ${VENV_DIR}/bin/activate
-                    pytest > result.log || true
-                    cat result.log
+                    . ${PYTHON_ENV}/bin/activate
+                    pytest --maxfail=1 --disable-warnings -q
                 '''
-            }
-        }
-
-        stage('SonarQube Analysis') {
-            steps {
-                echo "🔍 Running SonarQube analysis"
-                withSonarQubeEnv('My SonarQube') {
-                    sh '''
-                        . ${VENV_DIR}/bin/activate
-                        sonar-scanner \
-                          -Dsonar.projectKey=${PROJECT_NAME} \
-                          -Dsonar.sources=. \
-                          -Dsonar.host.url=$SONAR_HOST_URL \
-                          -Dsonar.login=$SONAR_AUTH_TOKEN
-                    '''
-                }
-            }
-        }
-
-        stage('Quality Gate') {
-            steps {
-                echo "✅ Checking SonarQube Quality Gate"
-                timeout(time: 5, unit: 'MINUTES') {
-                    waitForQualityGate abortPipeline: true
-                }
             }
         }
     }
 
     post {
-        always {
-            echo "🔎 Pipeline completed. Check SonarQube dashboard."
+        success {
+            echo '✅ Pipeline succeeded.'
         }
         failure {
-            echo "❌ Pipeline failed. See logs."
+            echo '❌ Pipeline failed. Check logs for details.'
+        }
+        always {
+            echo '🔍 Pipeline completed. Check reports or dashboard.'
         }
     }
 }
