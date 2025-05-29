@@ -62,7 +62,7 @@ pipeline {
         stage('SonarQube Analysis') {
             steps {
                 echo "🔍 Running SonarQube analysis"
-                withSonarQubeEnv('My SonarQube') {
+                withSonarQubeEnv('Jenkins-sonar-server') {
                     sh '''
                         . ${VENV_DIR}/bin/activate
                         ${SONAR_SCANNER_HOME}/bin/sonar-scanner \
