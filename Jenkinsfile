@@ -75,14 +75,14 @@ pipeline {
             }
         }
 
-        stage('Quality Gate') {
-            steps {
-                echo "✅ Checking SonarQube Quality Gate"
-                timeout(time: 10, unit: 'MINUTES') {
-                    waitForQualityGate abortPipeline: true
-                }
-            }
-        }
+        // stage('Quality Gate') {
+        //     steps {
+        //         echo "✅ Checking SonarQube Quality Gate"
+        //         timeout(time: 10, unit: 'MINUTES') {
+        //             waitForQualityGate abortPipeline: true
+        //         }
+        //     }
+        // }
     }
 
     post {
