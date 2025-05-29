@@ -60,7 +60,7 @@ pipeline {
             echo '🔎 Pipeline completed. Check SonarQube dashboard.'
         }
         failure {
-            echo '❌ Pipeline failed. See logs.'
+            echo '❌ Pipeline failed. See logs..'
         }
     }
 }
