@@ -1,21 +1,20 @@
 pipeline {
     agent any
 
-    options {
-        // Clean workspace before the pipeline starts
-        cleanWs()
-    }
-
     environment {
         SONAR_SCANNER_HOME = '/opt/sonar-scanner'
         VENV_DIR = 'venv'
     }
 
     stages {
+        stage('Clean Workspace') {
+            steps {
+                cleanWs()
+            }
+        }
+
         stage('Checkout') {
             steps {
-                // Explicit cleanup before checkout (optional, since cleanWs is set)
-                cleanWs()
                 checkout scm
             }
         }
@@ -40,9 +39,8 @@ pipeline {
             steps {
                 sh '''
                     . $VENV_DIR/bin/activate
-                    mkdir -p reports
                     coverage run -m pytest
-                    coverage xml -o reports/coverage.xml
+                    coverage xml
                 '''
             }
         }
@@ -55,7 +53,7 @@ pipeline {
                         -Dsonar.projectKey=my-python-test \
                         -Dsonar.sources=. \
                         -Dsonar.sourceEncoding=UTF-8 \
-                        -Dsonar.python.coverage.reportPaths=reports/coverage.xml
+                        -Dsonar.python.coverage.reportPaths=coverage.xml
                     '''
                 }
             }
