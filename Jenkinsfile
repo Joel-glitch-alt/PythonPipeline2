@@ -10,12 +10,14 @@ pipeline {
     }
 
     stages {
-        stage('Clean Workspace') {
-            steps {
-                echo '🧹 Cleaning workspace to avoid permission issues...'
-                deleteDir() // cleans everything in the workspace
-            }
-        }
+       stage('Clean Workspace') {
+    steps {
+        echo '🧹 Cleaning workspace to avoid permission issues...'
+        sh 'rm -rf .pytest_cache || true'
+        deleteDir()
+    }
+}
+
 
         stage('Checkout Code') {
             steps {
