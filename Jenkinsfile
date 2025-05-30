@@ -107,7 +107,7 @@ pipeline {
         PROJECT_NAME = 'PythonPipeline2'
         PROJECT_VERSION = '1.0'
         DOCKER_USERNAME = 'addition1905'
-        DOCKER_IMAGE = 'addition1905/python-quality -test:latest'
+        DOCKER_IMAGE = 'addition1905/python-quality-test:latest'
     }
 
     stages {
