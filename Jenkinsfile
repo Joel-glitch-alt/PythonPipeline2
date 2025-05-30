@@ -180,15 +180,15 @@ pipeline {
                 }
             }
         }
-
-        stage('Quality Gate') {
-            steps {
-                echo "Checking SonarQube Quality Gate"
-                timeout(time: 50, unit: 'MINUTES') {
-                    waitForQualityGate abortPipeline: true
-                }
-            }
-        }
+                 //Quality Gate on Hold due to SonarQube server issues......
+        // stage('Quality Gate') {
+        //     steps {
+        //         echo "Checking SonarQube Quality Gate"
+        //         timeout(time: 50, unit: 'MINUTES') {
+        //             waitForQualityGate abortPipeline: true
+        //         }
+        //     }
+        // }
 
         stage('Docker Build & Push') {
             steps {
