@@ -190,17 +190,17 @@ pipeline {
         //     }
         // }
 
-        stage('Docker Build & Push') {
-            steps {
-                echo "Building and pushing Docker image"
-                script {
-                    def img = docker.build("${DOCKER_IMAGE}")
-                    docker.withRegistry('https://index.docker.io/v1/', 'docker-hub-key2') {
-                        img.push()
-                    }
-                }
-            }
-        }
+        // stage('Docker Build & Push') {
+        //     steps {
+        //         echo "Building and pushing Docker image"
+        //         script {
+        //             def img = docker.build("${DOCKER_IMAGE}")
+        //             docker.withRegistry('https://index.docker.io/v1/', 'docker-hub-key2') {
+        //                 img.push()
+        //             }
+        //         }
+        //     }
+        // }
     }
 
     post {
